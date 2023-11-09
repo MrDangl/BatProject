@@ -7,15 +7,45 @@
 #include <iostream>
 #include <list>
 #include <map>
-#define MaxNvar   10
+#include <vector>
+#define MaxNvar  42
 using namespace std;
 
 // Graph class represents a directed graph
 // using adjacency list representation
+class Edge {
+    unsigned int start, end;
+    float probability = 0.8f;
+    bool state;
+    public:
+    int getStart()
+    {
+        return start;
+    }
+    int getEnd()
+    {
+        return end;
+    }
+    bool getState()
+    {
+        return state;
+    }
+    void changeState(bool change)
+    {
+        state = change;
+    }
+    Edge(int nodeStart, int nodeEnd)
+    {
+        start = nodeStart; end = nodeEnd;
+    }
+};
+
+
 class Graph {
 public:
     map<int, bool> visited;
     map<int, list<int> > adj;
+    vector<Edge*> edges;
 
     // Function to add an edge to graph
     void addEdge(int v, int w);
@@ -23,12 +53,15 @@ public:
     // DFS traversal of the vertices
     // reachable from v
     void DFS(int v);
+    vector<Edge*> getEdges();
 };
 
 void Graph::addEdge(int v, int w)
 {
     // Add w to v’s list.
+    Edge *edge = new Edge(v, w);
     adj[v].push_back(w);
+    edges.push_back(edge);
 }
 
 void Graph::DFS(int v)
@@ -46,23 +79,36 @@ void Graph::DFS(int v)
             DFS(*i);
 }
 
+vector<Edge*> Graph::getEdges()
+{
+    return edges;
+}
+
 // Driver code
 int main()
 {
+    Graph g;
+    g.addEdge(0, 1);
+    g.addEdge(0, 2);
+    g.addEdge(1, 2);
+    g.addEdge(1, 3);
+    g.addEdge(2, 3);
     unsigned int var, sol, Xvar;
-    unsigned int V[MaxNvar];
+    sol = 0;
+    vector<Edge*> pointeredges = g.getEdges();
 
-    for (var = 0; var < MaxNvar; var++) printf("%d ", V[var] = 0); printf("\n");
+    for (var = 0; var < pointeredges.size(); var++) printf("%d ", pointeredges[var]->getState()); printf("\n");
     var = 0;
     do {
-        if (V[var] == 0) {
-            V[var] = 1;
-
-            for (var = 0; var < MaxNvar; var++) printf("%d ", V[var]); printf("\n");
+        if (var) {
+            //for (var = 0; var < MaxNvar; var++) printf("%d ", V[var]); printf("\n");
             var = 0;
+            sol++;
+            printf("%d", sol); printf("\n");
         }
-        else { V[var] = 0; var++; }
+        else { var++; }
     } while (var < MaxNvar);
+    printf("%d ",sol);
     return 0;
 }
 

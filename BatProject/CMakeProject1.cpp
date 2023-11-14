@@ -36,7 +36,7 @@ class Edge {
     }
     Edge(int nodeStart, int nodeEnd)
     {
-        start = nodeStart; end = nodeEnd;
+        start = nodeStart; end = nodeEnd; state = false;
     }
 };
 
@@ -93,21 +93,43 @@ int main()
     g.addEdge(1, 2);
     g.addEdge(1, 3);
     g.addEdge(2, 3);
+    g.addEdge(3, 4);
+    g.addEdge(3, 5);
+    g.addEdge(4, 6);
+    g.addEdge(4, 5);
+    g.addEdge(5, 7);
+    g.addEdge(6, 2);
+    g.addEdge(6, 8);
+    g.addEdge(8, 9);
+    g.addEdge(8, 10);
+    g.addEdge(9, 10);
+    g.addEdge(9, 11);
+    g.addEdge(9, 12);
     unsigned int var, sol, Xvar;
     sol = 0;
     vector<Edge*> pointeredges = g.getEdges();
 
-    for (var = 0; var < pointeredges.size(); var++) printf("%d ", pointeredges[var]->getState()); printf("\n");
+    for (var = 0; var < pointeredges.size(); var++) 
+    {
+        std::cout << pointeredges[var]->getState()<<" ";
+    }
+    std::cout << "\n";
     var = 0;
     do {
-        if (var) {
-            //for (var = 0; var < MaxNvar; var++) printf("%d ", V[var]); printf("\n");
+        if (!pointeredges[var]->getState()) {
+            pointeredges[var]->changeState(true);
+            for (var = 0; var < pointeredges.size(); var++)
+            {
+                 
+                std::cout << " "<< pointeredges[var]->getState();
+                //sol++;
+            }
             var = 0;
-            sol++;
-            printf("%d", sol); printf("\n");
+            std::cout << "\n";
+           // printf("%d", sol); printf("\n");
         }
-        else { var++; }
-    } while (var < MaxNvar);
+        else { pointeredges[var]->changeState(false); var++; }
+    } while (var < pointeredges.size());
     printf("%d ",sol);
     return 0;
 }

@@ -86,7 +86,7 @@ void Graph::addEdge(int v, int w,bool state)
 double Graph::calculate_state()
 {
     double graphprobabil = 0;
-    
+#pragma omp parallel for reduction(+ : sum) 
     for (auto edge : edges)
     {
         if (edge->getState()) graphprobabil *= edge->getProbability();
@@ -109,10 +109,11 @@ bool Graph::DFS(int v, int m)
     // Mark the current node as visited and
     // print it
     visited[v] = true;
-    cout << v << " ";
+    //cout << v << " ";
     // Recur for all the vertices adjacent
     // to this vertex
     list<Edge*>::iterator i;
+#pragma omp parallel for reduction(+ : sum)
     for (auto i : adj[v]) {
         if (!visited[i->getEnd()] && i->getState())
         {
@@ -172,7 +173,7 @@ int main()
     do {
         if (pointeredges[var]->getState()) {
             pointeredges[var]->changeState(false);
-            #pragma omp parallel for reduction(+ : sum) 
+            
             //for (var = 0; var < pointeredges.size(); var++)
             //{
             //    std::cout << pointeredges[var]->getState() << " ";
@@ -180,14 +181,14 @@ int main()
             //    //sol++;
             //}
             if (g.DFS(0, 12)) sum += g.calculate_state();
-            std::cout << sum << "\n";
+            //std::cout << sum << "\n";
             var = 0;
-            std::cout << "\n";
+            //std::cout << "\n";
            // printf("%d", sol); printf("\n");
         }
         else { pointeredges[var]->changeState(true); var++; }
     } while (var < pointeredges.size());
-    printf("%d ",sol);
+    std::cout <<" final score is " << sum << "\n";
     return 0;
 }
 

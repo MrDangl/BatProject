@@ -16,7 +16,7 @@ using namespace std;
 // using adjacency list representation
 class Edge {
     unsigned int start, end;
-    double probability = 0.8;
+    double probability = 0.9;
     bool state;
     public:
     int getStart()
@@ -41,7 +41,7 @@ class Edge {
     }
     Edge(int nodeStart, int nodeEnd)
     {
-        start = nodeStart; end = nodeEnd; state = true;
+        start = nodeStart; end = nodeEnd; state = false;
     }
     Edge(int nodeStart, int nodeEnd,bool statebool)
     {
@@ -58,6 +58,7 @@ public:
     vector<Edge*> edges;
 
     // Function to add an edge to graph
+    void clearVisited();
     void addEdge(int v, int w);
     void addEdge(int v, int w,bool state);
     double calculate_state();
@@ -67,6 +68,10 @@ public:
     bool DFS(int v, int m);
     vector<Edge*> getEdges();
 };
+void Graph::clearVisited()
+{
+    visited.clear();
+}
 
 void Graph::addEdge(int v, int w)
 {
@@ -97,7 +102,7 @@ double Graph::calculate_state()
             else graphprobabil = 1 - edge->getProbability();
         }
     }
-    //std::cout << graphprobabil<<"\n";
+//std::cout << graphprobabil<<"\n";
     return graphprobabil;
 }
 
@@ -126,7 +131,7 @@ bool Graph::DFS(int v, int m)
         //cout << "found" << "\n";
         return true;
     }
-    else false;
+    else return false;
 
 }
 
@@ -144,19 +149,19 @@ int main()
     g.addEdge(1, 2);
     g.addEdge(1, 3);
     g.addEdge(2, 3);
-    g.addEdge(3, 4);
-    g.addEdge(3, 5);
+    g.addEdge(2, 1);
+   /* g.addEdge(3, 5);
     g.addEdge(4, 6);
     g.addEdge(4, 5);
-    g.addEdge(5, 7,false);
+    g.addEdge(5, 7);
     g.addEdge(6, 2);
-    g.addEdge(6, 0,false);
+    g.addEdge(6, 0);
     g.addEdge(6, 8);
     g.addEdge(8, 9);
     g.addEdge(8, 10);
     g.addEdge(9, 10);
     g.addEdge(9, 11);
-    g.addEdge(9, 12);
+    g.addEdge(9, 12);*/
     unsigned int var, sol, Xvar;
     sol = 0;
     vector<Edge*> pointeredges = g.getEdges();
@@ -166,27 +171,28 @@ int main()
         std::cout << pointeredges[var]->getState()<<" ";
     }
     std::cout << "\n";
-    bool i = g.DFS(0,11);
-    std::cout << i;
+    bool i = g.DFS(0,3);
+    std::cout << "found path"<<i;
     double sum = 0;
     var = 0;
     do {
-        if (pointeredges[var]->getState()) {
-            pointeredges[var]->changeState(false);
+        if (!pointeredges[var]->getState()) {
+            pointeredges[var]->changeState(true);
             
-            //for (var = 0; var < pointeredges.size(); var++)
-            //{
-            //    std::cout << pointeredges[var]->getState() << " ";
-            //    
-            //    //sol++;
-            //}
-            if (g.DFS(0, 12)) sum += g.calculate_state();
-            //std::cout << sum << "\n";
+            for (var = 0; var < pointeredges.size(); var++)
+            {
+                std::cout << pointeredges[var]->getState() << " ";
+                
+                //sol++;
+            }
+            g.clearVisited();
+            if (g.DFS(0, 3)) sum += g.calculate_state();
+            std::cout << sum << "\n";
             var = 0;
             //std::cout << "\n";
            // printf("%d", sol); printf("\n");
         }
-        else { pointeredges[var]->changeState(true); var++; }
+        else { pointeredges[var]->changeState(false); var++; }
     } while (var < pointeredges.size());
     std::cout <<" final score is " << sum << "\n";
     return 0;

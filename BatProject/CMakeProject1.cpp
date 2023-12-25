@@ -48,7 +48,7 @@ class Edge {
         start = nodeStart; end = nodeEnd; state = statebool;
     }
 };
-
+// TODO: rearrange cycles for OpenMP integration
 
 class Graph {
 public:
@@ -88,10 +88,12 @@ void Graph::addEdge(int v, int w,bool state)
     edges.push_back(edge);
 }
 
+
+// Calculation of the probability of the state by multiplying probabilities of every edge
 double Graph::calculate_state()
 {
     double graphprobabil = 0;
-    #pragma omp parallel for reduction(+:graphprobabil)
+//    #pragma omp parallel for reduction(+:graphprobabil)
     for (int i = 0; i<edges.size();i++) {
         if (edges[i]->getState()) graphprobabil *= edges[i]->getProbability();
         else graphprobabil *= 1 - edges[i]->getProbability();
@@ -107,29 +109,30 @@ double Graph::calculate_state()
 
 
 
-
+// recursive altered deep first search that sends bool in return found m
+// TODO: redo function without recursive for open MP
 bool Graph::DFS(int v, int m)
 {
     // Mark the current node as visited and
     // print it
-#pragma omp critical
+//#pragma omp critical
     visited[v] = true;
     //cout << v << " ";
     // Recur for all the vertices adjacent
     // to this vertex
 
     list<Edge*>::iterator i;
-#pragma omp parallel for
+//#pragma omp parallel for
     for (auto i : adj[v]) {
-        #pragma omp critical
+//      #pragma omp critical
         if (!visited[i->getEnd()] && i->getState())
         {
-            #pragma omp task
+//            #pragma omp task
             DFS(i->getEnd(), m);
         }
     }
     //list<Edge>::iterator iter = std::find(adj[v].begin(), adj[v].end(), iter->getEnd()==m);
-    #pragma omp critical
+//    #pragma omp critical
     if (visited[m])
     {
         //cout << "found" << "\n";
@@ -147,58 +150,31 @@ vector<Edge*> Graph::getEdges()
 // Driver code
 int main()
 {
+    // Plug graph here
     Graph g;
     {
+        //example e
     g.addEdge(1, 2);
     g.addEdge(1, 3);
-    g.addEdge(2, 4);
     g.addEdge(2, 5);
-    g.addEdge(2, 3);
     g.addEdge(3, 7);
-    g.addEdge(4, 2);
+    g.addEdge(3, 4);
+    g.addEdge(4, 3);
     g.addEdge(4, 5);
-    g.addEdge(4, 8);
     g.addEdge(5, 2);
-    g.addEdge(5, 9);
+    g.addEdge(5, 6);
     g.addEdge(5, 8);
     g.addEdge(5, 4);
-    g.addEdge(5, 6);
     g.addEdge(6, 5);
-    g.addEdge(6, 10);
-    g.addEdge(6, 13);
     g.addEdge(6, 7);
     g.addEdge(7, 6);
     g.addEdge(7, 3);
-    g.addEdge(7, 10);
-    g.addEdge(7, 11);
-    g.addEdge(7, 12);
-    g.addEdge(7, 15);
-    g.addEdge(8, 4);
+    g.addEdge(7, 8);
+    g.addEdge(7, 9);
     g.addEdge(8, 5);
-    g.addEdge(8, 16);
-    g.addEdge(9, 5);
-    g.addEdge(9, 13);
-    g.addEdge(10, 13);
-    g.addEdge(10, 11);
-    g.addEdge(10, 6);
-    g.addEdge(10, 7);
-    g.addEdge(11, 7);
-    g.addEdge(11, 10);
-    g.addEdge(12, 7);
-    g.addEdge(12, 15);
-    g.addEdge(13, 6);
-    g.addEdge(13, 9);
-    g.addEdge(13, 10);
-    g.addEdge(13, 14);
-    g.addEdge(13, 15);
-    g.addEdge(13, 16);
-    g.addEdge(14, 13);
-    g.addEdge(14, 15);
-    g.addEdge(15, 7);
-    g.addEdge(15, 12);
-    g.addEdge(15, 14);
-    g.addEdge(15, 13);
-    g.addEdge(15, 16);
+    g.addEdge(8, 7);
+    g.addEdge(8, 9);
+
 }
     unsigned int var, sol;
     sol = 0;
@@ -209,34 +185,45 @@ int main()
         std::cout << pointeredges[var]->getState()<<" ";
     }
     std::cout << "\n";
-    //bool i = g.DFS(0,3);
-    //std::cout << "found path"<<i;
     double sum = 0;
     var = 0;
     bool message = true;
-    omp_set_num_threads(4);
-    cout << " max threads" << omp_get_max_threads();
+
+    //TODO: OpenMP refactor
+    //omp_set_num_threads(4);
+    //cout << " max threads" << omp_get_max_threads();
+
+    //Идет перебор по состояниям,код выполняется если у нас не существует дуги
+    // начинаем с пустого состояния всех дуг, потом потом по одной включаем 
+    // и проверяем каждое состояние через DFS есть ли в данном состоянии указаный узел
+    // если узел есть считаем состояние как произведение вероятностей для каждой дуги в схеме , где 1-вер для выключенной
+    // 1+вер для включенной, потом мы суммируем все полученные вероятности состояний и получаем оценку для всей сети
+
     do {
         if (!pointeredges[var]->getState()) {
             
             pointeredges[var]->changeState(true);
-            //
+            
+            //Debug slow
             //for (var = 0; var < pointeredges.size(); var++)
             //{
             //    std::cout << pointeredges[var]->getState() << " ";
             //    
             //    //sol++;
             //}
+            //if (var > pointeredges.size() / 2) std::cout << "Half way there\n";
+            //std::cout << sum << "\n";
+
             g.clearVisited();
             
-            if (g.DFS(1, 16))
+            if (g.DFS(1, 9))
             {
                 sum += g.calculate_state();
             }
             if (message) { cout << " number of threads" << omp_get_num_threads() << "\n"; message = false; }
-            //std::cout << sum << "\n";
+
             var = 0;
-            if(var>pointeredges.size()/4) std::cout << "Half way there\n";
+            
            // printf("%d", sol); printf("\n");
         }
         else { pointeredges[var]->changeState(false);var++; }

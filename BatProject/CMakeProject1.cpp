@@ -209,7 +209,10 @@ int main()
             var = 0;
           // printf("%d", sol); printf("\n");
         }
-        else { pointeredges[var]->changeState(false); var++; }
+        else 
+        { 
+            pointeredges[var]->changeState(false); var++; 
+        }
         //Debug slow
 
 

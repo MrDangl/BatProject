@@ -198,7 +198,7 @@ int main()
 
     //Test
     int numberOfiter = powl(2, pointeredges.size());
-    std::cout << "number of supposed iter" << numberOfiter;
+    std::cout << "number of supposed iter" << numberOfiter <<"\n";
     for (int i = 0; i < numberOfiter; i++)
     {
 
@@ -228,7 +228,7 @@ int main()
         {
             sum += g.calculate_state();
         }
-        if (message) { cout << " number of threads" << omp_get_num_threads() << "\n"; message = false; }
+        //if (message) { cout << " number of threads" << omp_get_num_threads() << "\n"; message = false; }
 
         
 

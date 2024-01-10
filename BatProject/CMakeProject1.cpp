@@ -159,6 +159,8 @@ int main()
     g.addEdge(2, 3);
     g.addEdge(2, 4);
     g.addEdge(3, 4);
+    g.addEdge(3, 2);
+
     //g.addEdge(2, 5);
     //g.addEdge(3, 7);
     //g.addEdge(3, 4);
@@ -195,23 +197,24 @@ int main()
     //TODO: OpenMP refactor
     //omp_set_num_threads(4);
     //cout << " max threads" << omp_get_max_threads();
-
+    
     //Test
     int numberOfiter = powl(2, pointeredges.size());
     std::cout << "number of supposed iter" << numberOfiter <<"\n";
-    for (int i = 0; i < numberOfiter; i++)
+
+    for (int i = 0; i < pointeredges.size(); i++)
     {
 
         sol++;
-        if (!pointeredges[var]->getState()) {
+        if (!pointeredges[i]->getState()) {
             
-            pointeredges[var]->changeState(true);
-            var = 0;
+            pointeredges[i]->changeState(true);
+            i = 0;
           // printf("%d", sol); printf("\n");
         }
         else 
         { 
-            pointeredges[var]->changeState(false); var++; 
+            pointeredges[i]->changeState(false); 
         }
         //Debug slow
 
@@ -237,7 +240,9 @@ int main()
 
     }
     std::cout << " final score is " << sum <<"Itteration number "<< sol <<" How much should be " <<pow(2,pointeredges.size()) << "\n";
+    
 
+    sum = 0;
     //
 
     //Идет перебор по состояниям,код выполняется если у нас не существует дуги
@@ -245,25 +250,26 @@ int main()
     // и проверяем каждое состояние через DFS есть ли в данном состоянии указаный узел
     // если узел есть считаем состояние как произведение вероятностей для каждой дуги в схеме , где 1-вер для выключенной
     // 1+вер для включенной, потом мы суммируем все полученные вероятности состояний и получаем оценку для всей сети
-    /*
+    sol = 0;
     do {
+        sol++;
         if (!pointeredges[var]->getState()) {
             
             pointeredges[var]->changeState(true);
             
-            ////Debug slow
-            //for (var = 0; var < pointeredges.size(); var++)
-            //{
-            //    std::cout << pointeredges[var]->getState() << " ";
-            //    
-            //    //sol++;
-            //}
-            ////if (var > pointeredges.size() / 2) std::cout << "Half way there\n";
-            //std::cout << sum << "\n";
+            //Debug slow
+            for (var = 0; var < pointeredges.size(); var++)
+            {
+                std::cout << pointeredges[var]->getState() << " ";
+                
+                //sol++;
+            }
+            //if (var > pointeredges.size() / 2) std::cout << "Half way there\n";
+            std::cout << sum << "\n";
 
             g.clearVisited();
             
-            if (g.DFS(1, 9))
+            if (g.DFS(1, 4))
             {
                 sum += g.calculate_state();
             }
@@ -275,8 +281,8 @@ int main()
         }
         else { pointeredges[var]->changeState(false);var++; }
     } while (var < pointeredges.size());
-    std::cout <<" final score is " << sum << "\n";
-   */ 
+    std::cout <<" final score is " << sum <<" plus numb of iter"<< sol << "\n";
+   
     return 0;
 }
 

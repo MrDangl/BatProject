@@ -147,6 +147,111 @@ vector<Edge*> Graph::getEdges()
     return edges;
 }
 
+
+
+// Do while метод, работает на 2^n+1 дольше делает абсолютно одно и то же что и фор, работает одновременно только один
+    // так как необходимо менять состояния на выключенные для каждого набора
+    //Идет перебор по состояниям,код выполняется если у нас не существует дуги
+    // начинаем с пустого состояния всех дуг, потом потом по одной включаем 
+    // и проверяем каждое состояние через DFS есть ли в данном состоянии указаный узел
+    // если узел есть считаем состояние как произведение вероятностей для каждой дуги в схеме , где 1-вер для выключенной
+    // 1+вер для включенной, потом мы суммируем все полученные вероятности состояний и получаем оценку для всей сети
+double calculateGraphReliabilityWhile(Graph n,int from, int to){
+    
+    double sum = 0;
+    int var = 0;
+    int numberOfIter = std::pow(2, n.getEdges().size());
+    int sol = 0;
+    auto pointeredges = n.getEdges();
+
+    do {
+        sol++;
+        if (!pointeredges[var]->getState()) {
+            
+            pointeredges[var]->changeState(true);
+            
+            //Debug slow
+            //for (var = 0; var < pointeredges.size(); var++)
+            //{
+            //    std::cout << pointeredges[var]->getState() << " ";
+            //    
+            //    //sol++;
+            //}
+            //if (var > pointeredges.size() / 2) std::cout << "Half way there\n";
+            //std::cout << sum << "\n";
+
+            n.clearVisited();
+            
+            if (n.DFS(from, to))
+            {
+                sum += n.calculate_state();
+            }
+            var = 0;
+           // printf("%d", sol); printf("\n");
+        }
+        else { pointeredges[var]->changeState(false);var++; }
+    } while (var < pointeredges.size());
+    return sum;
+}
+
+
+//TODO::OpenMP adapter
+// var -иттератор указывающий на дугу,numbefOfIter-количество иттераций необходимых для алгоритма 
+//Идет перебор по состояниям,код выполняется если у нас не существует дуги
+// начинаем с выключенных состояний всех дуг, потом потом по одной включаем 
+// и проверяем каждое состояние через DFS есть ли в данном состоянии указаный узел
+// если узел есть считаем состояние как произведение вероятностей для каждой дуги в схеме , где 1-вер для выключенной
+// 1+вер для включенной, потом мы суммируем все полученные вероятности состояний и получаем оценку для всей сети
+double calculateGraphReliabilityFor(Graph n,int from, int to)
+{
+    double sum = 0;
+    int var = 0;
+    int numberOfIter = std::pow(2, n.getEdges().size());
+    int sol = 0;
+    auto pointeredges = n.getEdges();
+    for (int i = 0; i < numberOfIter - 1; i++)
+    {
+        sol++;
+        if (var < pointeredges.size())
+        {
+            if (pointeredges[var]->getState()) {
+
+                while (pointeredges[var]->getState() != false)
+                {
+                    pointeredges[var]->changeState(false);
+                    if (var < pointeredges.size() - 1) var++;
+                }
+                // printf("%d", sol); printf("\n");
+            }
+            if (!pointeredges[var]->getState())
+            {
+                pointeredges[var]->changeState(true);
+                var = 0;
+            }
+            
+        }
+
+        //Debug slow
+        //if (var > pointeredges.size() / 2) std::cout << "Half way there\n";
+        //for (int j = 0; j < pointeredges.size(); j++)
+        //{
+        //    std::cout << pointeredges[j]->getState() << " ";
+        //    //sol++;
+        //}
+        //std::cout << sum << "\n";
+
+        n.clearVisited();
+
+        if (n.DFS(from, to))
+        {
+            sum += n.calculate_state();
+        }
+        //if (message) { cout << " number of threads" << omp_get_num_threads() << "\n"; message = false; }
+    }
+
+    return sum;
+}
+
 // Driver code
 int main()
 {
@@ -156,133 +261,38 @@ int main()
         //example e
     g.addEdge(1, 2);
     g.addEdge(1, 3);
-    g.addEdge(2, 3);
-    g.addEdge(2, 4);
-    g.addEdge(3, 4);
-    g.addEdge(3, 2);
 
-    //g.addEdge(2, 5);
-    //g.addEdge(3, 7);
-    //g.addEdge(3, 4);
-    //g.addEdge(4, 3);
-    //g.addEdge(4, 5);
-    //g.addEdge(5, 2);
-    //g.addEdge(5, 6);
-    //g.addEdge(5, 8);
-    //g.addEdge(5, 4);
-    //g.addEdge(6, 5);
-    //g.addEdge(6, 7);
-    //g.addEdge(7, 6);
-    //g.addEdge(7, 3);
-    //g.addEdge(7, 8);
-    //g.addEdge(7, 9);
-    //g.addEdge(8, 5);
-    //g.addEdge(8, 7);
-    //g.addEdge(8, 9);
+    /*g.addEdge(2, 3);
+    g.addEdge(2, 4);
+    g.addEdge(3, 2);
+    g.addEdge(3, 4);*/
+
+
+    g.addEdge(2, 5);
+    g.addEdge(3, 7);
+    g.addEdge(3, 4);
+    g.addEdge(4, 3);
+    g.addEdge(4, 5);
+    g.addEdge(5, 2);
+    g.addEdge(5, 6);
+    g.addEdge(5, 8);
+    g.addEdge(5, 4);
+    g.addEdge(6, 5);
+    g.addEdge(6, 7);
+    g.addEdge(7, 6);
+    g.addEdge(7, 3);
+    g.addEdge(7, 8);
+    g.addEdge(7, 9);
+    g.addEdge(8, 5);
+    g.addEdge(8, 7);
+    g.addEdge(8, 9);
 
 }
-    unsigned int var, sol;
-    sol = 0;
-    vector<Edge*> pointeredges = g.getEdges();
 
-    for (var = 0; var < pointeredges.size(); var++) 
-    {
-        std::cout << pointeredges[var]->getState()<<" ";
-    }
-    std::cout << "\n";
-    double sum = 0;
-    var = 0;
-    bool message = true;
+    // calculation are done in methods
+    double sum = calculateGraphReliabilityFor(g, 1, 9);
 
-    //TODO: OpenMP refactor
-    //omp_set_num_threads(4);
-    //cout << " max threads" << omp_get_max_threads();
-    
-    //Test
-    int numberOfiter = powl(2, pointeredges.size());
-    std::cout << "number of supposed iter" << numberOfiter <<"\n";
-
-    for (int i = 0; i < pointeredges.size(); i++)
-    {
-
-        sol++;
-        if (!pointeredges[i]->getState()) {
-            
-            pointeredges[i]->changeState(true);
-            i = 0;
-          // printf("%d", sol); printf("\n");
-        }
-        else 
-        { 
-            pointeredges[i]->changeState(false); 
-        }
-        //Debug slow
-
-
-        //if (var > pointeredges.size() / 2) std::cout << "Half way there\n";
-        
-        for (int j = 0; j < pointeredges.size(); j++)
-        {
-            std::cout << pointeredges[j]->getState() << " ";
-            //sol++;
-        }
-        std::cout << sum << "\n";
-
-        g.clearVisited();
-
-        if (g.DFS(1, 4))
-        {
-            sum += g.calculate_state();
-        }
-        //if (message) { cout << " number of threads" << omp_get_num_threads() << "\n"; message = false; }
-
-        
-
-    }
-    std::cout << " final score is " << sum <<"Itteration number "<< sol <<" How much should be " <<pow(2,pointeredges.size()) << "\n";
-    
-
-    sum = 0;
-    //
-
-    //Идет перебор по состояниям,код выполняется если у нас не существует дуги
-    // начинаем с пустого состояния всех дуг, потом потом по одной включаем 
-    // и проверяем каждое состояние через DFS есть ли в данном состоянии указаный узел
-    // если узел есть считаем состояние как произведение вероятностей для каждой дуги в схеме , где 1-вер для выключенной
-    // 1+вер для включенной, потом мы суммируем все полученные вероятности состояний и получаем оценку для всей сети
-    sol = 0;
-    do {
-        sol++;
-        if (!pointeredges[var]->getState()) {
-            
-            pointeredges[var]->changeState(true);
-            
-            //Debug slow
-            for (var = 0; var < pointeredges.size(); var++)
-            {
-                std::cout << pointeredges[var]->getState() << " ";
-                
-                //sol++;
-            }
-            //if (var > pointeredges.size() / 2) std::cout << "Half way there\n";
-            std::cout << sum << "\n";
-
-            g.clearVisited();
-            
-            if (g.DFS(1, 4))
-            {
-                sum += g.calculate_state();
-            }
-            if (message) { cout << " number of threads" << omp_get_num_threads() << "\n"; message = false; }
-
-            var = 0;
-            
-           // printf("%d", sol); printf("\n");
-        }
-        else { pointeredges[var]->changeState(false);var++; }
-    } while (var < pointeredges.size());
-    std::cout <<" final score is " << sum <<" plus numb of iter"<< sol << "\n";
-   
+    std::cout << " final score is " << sum << "\n";
     return 0;
 }
 

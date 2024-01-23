@@ -4,6 +4,9 @@
 
 // C++ program to print DFS traversal from
 // a given vertex in a  given graph
+
+// omp_critical.cpp
+// compile with: /openmp
 #include <iostream>
 #include <list>
 #include <map>
@@ -180,13 +183,16 @@ double calculateGraphReliabilityWhile(Graph n,int from, int to){
             //if (var > pointeredges.size() / 2) std::cout << "Half way there\n";
             //std::cout << sum << "\n";
 
-            n.clearVisited();
+            Graph* temp = new Graph(n);
             
-            if (n.DFS(from, to))
+            temp->clearVisited();
+            
+            if (temp->DFS(from, to))
             {
-                sum += n.calculate_state();
+                sum += temp->calculate_state();
             }
             var = 0;
+            delete temp;
            // printf("%d", sol); printf("\n");
         }
         else { pointeredges[var]->changeState(false);var++; }
@@ -209,46 +215,60 @@ double calculateGraphReliabilityFor(Graph n,int from, int to)
     int numberOfIter = std::pow(2, n.getEdges().size());
     int sol = 0;
     auto pointeredges = n.getEdges();
-    for (int i = 0; i < numberOfIter - 1; i++)
+    #pragma omp parallel
     {
-        sol++;
-        if (var < pointeredges.size())
-        {
-            if (pointeredges[var]->getState()) {
-
-                while (pointeredges[var]->getState() != false)
-                {
-                    pointeredges[var]->changeState(false);
-                    if (var < pointeredges.size() - 1) var++;
-                }
-                // printf("%d", sol); printf("\n");
-            }
-            if (!pointeredges[var]->getState())
+            #pragma omp for reduction(+:sum)
+            for (sol = 0; sol < numberOfIter; sol++)
             {
-                pointeredges[var]->changeState(true);
-                var = 0;
+                
+                if (var < pointeredges.size())
+                {
+                    if (pointeredges[var]->getState()) {
+
+                        while (pointeredges[var]->getState() != false)
+                        {
+                            pointeredges[var]->changeState(false);
+                            if (var < pointeredges.size() - 1)
+                            {
+                               
+                                var++;
+                            }
+                        }
+                        
+                    }
+                    if (!pointeredges[var]->getState())
+                    {
+                        pointeredges[var]->changeState(true);
+                        var = 0;
+                    }
+
+                }
+
+                //Debug slow
+                //if (var > pointeredges.size() / 2) std::cout << "Half way there\n";
+
+                //for (int j = 0; j < pointeredges.size(); j++)
+                //{
+                //    std::cout << pointeredges[j]->getState() << " ";
+                //    //sol++;
+                //}
+                //std::cout << sum << "\n";
+
+
+                Graph* temp = new Graph(n);
+
+                temp->clearVisited();
+                //n.clearVisited();
+                printf("iter number %d , thread num %d , val value %d ,\n",sol,omp_get_thread_num(), var);
+                if (temp->DFS(from, to))
+                {
+                    #pragma omp atomic
+                    sum += temp->calculate_state();
+                }
+                delete temp;
+                //if (message) { cout << " number of threads" << omp_get_num_threads() << "\n"; message = false; }
             }
-            
-        }
-
-        //Debug slow
-        //if (var > pointeredges.size() / 2) std::cout << "Half way there\n";
-        //for (int j = 0; j < pointeredges.size(); j++)
-        //{
-        //    std::cout << pointeredges[j]->getState() << " ";
-        //    //sol++;
-        //}
-        //std::cout << sum << "\n";
-
-        n.clearVisited();
-
-        if (n.DFS(from, to))
-        {
-            sum += n.calculate_state();
-        }
-        //if (message) { cout << " number of threads" << omp_get_num_threads() << "\n"; message = false; }
     }
-
     return sum;
 }
 
@@ -289,6 +309,7 @@ int main()
 
 }
 
+    std::cout << "Here we go ";
     // calculation are done in methods
     double sum = calculateGraphReliabilityFor(g, 1, 9);
 

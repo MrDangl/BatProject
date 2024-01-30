@@ -9,11 +9,13 @@ project ("BatProject")
 
 # Добавьте источник в исполняемый файл этого проекта.
 add_executable (BatResilProject "CMakeProject1.cpp" "CMakeProject1.h")
-
+target_compile_features(BatResilProject PRIVATE cxx_std_17)
+set(GCC_COMPILE_FLAGS "${GCC_COMPILE_FLAGS} /std:c++17")
 # Создание библиотеки
 
 
 add_subdirectory(lib/pugiXML)
+add_subdirectory(lib/cmd_line)
 find_package(OpenMP)
 find_package(pugs)
 
@@ -24,5 +26,6 @@ if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET BatResilProject PROPERTY CXX_STANDARD 20)
 endif()
 target_link_libraries(BatResilProject PRIVATE pugs)
+target_link_libraries(BatResilProject PRIVATE cmd_line)
 
 # TODO: Добавьте тесты и целевые объекты, если это необходимо.

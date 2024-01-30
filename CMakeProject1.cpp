@@ -7,6 +7,7 @@
 #include <iostream>
 #include <list>
 #include <map>
+#include <cmath>
 #include <vector>
 #include <omp.h>
 #include "lib/pugiXML/src/pugixml.hpp"

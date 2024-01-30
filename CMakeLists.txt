@@ -9,8 +9,7 @@ project ("BatProject")
 
 # Добавьте источник в исполняемый файл этого проекта.
 add_executable (BatResilProject "CMakeProject1.cpp" "CMakeProject1.h")
-target_compile_features(BatResilProject PRIVATE cxx_std_17)
-set(GCC_COMPILE_FLAGS "${GCC_COMPILE_FLAGS} /std:c++17")
+
 # Создание библиотеки
 
 
@@ -23,7 +22,7 @@ if(OpenMP_CXX_FOUND)
     target_link_libraries(BatResilProject PUBLIC OpenMP::OpenMP_CXX)
 endif()
 if (CMAKE_VERSION VERSION_GREATER 3.12)
-  set_property(TARGET BatResilProject PROPERTY CXX_STANDARD 20)
+  set_property(TARGET BatResilProject PROPERTY CXX_STANDARD 17)
 endif()
 target_link_libraries(BatResilProject PRIVATE pugs)
 target_link_libraries(BatResilProject PRIVATE cmd_line)

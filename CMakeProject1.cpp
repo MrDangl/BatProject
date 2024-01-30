@@ -10,6 +10,7 @@
 #include <cmath>
 #include <vector>
 #include <omp.h>
+#include "lib/cmd_line/src/cmd_line.hpp"
 #include "lib/pugiXML/src/pugixml.hpp"
 
 #define MaxNvar  42
@@ -322,28 +323,29 @@ double calculateGraphReliabilityFor(Graph n, string from, string to)
 }
 
 // Driver code
-int main()
+int main(int argc, char** argv)
 {
     // Plug graph here
     double probabil;
-    string pathml;
-    string start;
-    string finish;
-    string temp;
-    
+    std::string pathml;
+    std::string start;
+    std::string finish;
+    std::string temp;
+    Command_line args;
+    args.add_argument({ "-pathMl" }, &pathml, "Path to GrapthMl.");
+    args.add_argument({ "-probability" }, &probabil, "Probability of edge reliability");
+    args.add_argument({ "-start" }, &start, "Start node");
+    args.add_argument({ "-finish" }, &finish, "finish node");
+
+    args.parse(argc, argv);
     // calculation are done in methods
-    std::cout << "Type path to graphml file \n";
-    std::cin >> pathml;
+    
+
     Graph e(pathml);
 
-    std::cout << "\n Type probabil for edges \n";
-    std::cin >> probabil;
     e.setExternalProbabil(probabil);
 
-    std::cout << "\n Type Begining node \n";
-    std::cin >> start;
-    std::cout << "\n Type Finish node \n";
-    std::cin >> finish;
+
     double sum = calculateGraphReliabilityFor(e, start, finish);
 
     std::cout << " final score is " << sum << "\n";

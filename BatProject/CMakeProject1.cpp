@@ -344,13 +344,13 @@ double calculateGraphReliabilityFor(Graph n, string from, string to)
                 }
 
         //Debug slow
-        //if (var > pointeredges.size() / 2) std::cout << "Half way there\n";
-        //for (int j = 0; j < pointeredges.size(); j++)
-        //{
-        //    std::cout << pointeredges[j]->getState() << " ";
-        //    //sol++;
-        //}
-       //std::cout << sum << "\n";
+        if (var > pointeredges.size() / 2) std::cout << "Half way there\n";
+        for (int j = 0; j < pointeredges.size(); j++)
+        {
+            std::cout << pointeredges[j]->getState() << " ";
+            //sol++;
+        }
+       std::cout << sum << "\n";
 
 
                 Graph* temp = new Graph(n);
@@ -431,7 +431,6 @@ std::vector<GState> calculateAllStates(Graph n)
 int main(int argc, char* argv[])
 {
     // Plug graph here
-    Graph g("gas2003.graphml");
     double probabil;
     string pathml;
     string start;
@@ -444,7 +443,8 @@ int main(int argc, char* argv[])
     Graph e(pathml);
     std::cout << "\n Type probabil for edges \n";
     std::cin >> probabil;
-    std::cout << "\n  + Type Begining node \n";
+    e.setExternalProbabil(probabil);
+    std::cout << "\n  + Type Begining node \n"<< probabil;
     std::cin >> start;
     std::cout << "\n Type Finish node \n";
     std::cin >> finish;

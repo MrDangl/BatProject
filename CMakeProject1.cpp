@@ -10,6 +10,7 @@
 #include <iostream>
 #include <list>
 #include <map>
+#include <cmath>
 #include <vector>
 #include <bitset>
 #include <omp.h>

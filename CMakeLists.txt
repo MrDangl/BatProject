@@ -4,12 +4,25 @@
 cmake_minimum_required (VERSION 3.8)
 
 # Enable Hot Reload for MSVC compilers if supported.
-if (POLICY CMP0141)
-  cmake_policy(SET CMP0141 NEW)
-  set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<IF:$<AND:$<C_COMPILER_ID:MSVC>,$<CXX_COMPILER_ID:MSVC>>,$<$<CONFIG:Debug,RelWithDebInfo>:EditAndContinue>,$<$<CONFIG:Debug,RelWithDebInfo>:ProgramDatabase>>")
-endif()
 
 project ("BatProject")
 
-# Включите подпроекты.
-add_subdirectory ("BatProject")
+# Добавьте источник в исполняемый файл этого проекта.
+add_executable (CMakeProject1 "CMakeProject1.cpp" "CMakeProject1.h")
+
+# Создание библиотеки
+
+
+add_subdirectory(lib/pugiXML)
+find_package(OpenMP)
+find_package(pugs)
+
+if(OpenMP_CXX_FOUND)
+    target_link_libraries(CMakeProject1 PUBLIC OpenMP::OpenMP_CXX)
+endif()
+if (CMAKE_VERSION VERSION_GREATER 3.12)
+  set_property(TARGET CMakeProject1 PROPERTY CXX_STANDARD 20)
+endif()
+target_link_libraries(CMakeProject1 PRIVATE pugs)
+
+# TODO: Добавьте тесты и целевые объекты, если это необходимо.

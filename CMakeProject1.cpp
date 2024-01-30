@@ -299,13 +299,13 @@ double calculateGraphReliabilityFor(Graph n, string from, string to)
         }
 
         //Debug slow
-        if (var > pointeredges.size() / 2) std::cout << "Half way there\n";
-        for (int j = 0; j < pointeredges.size(); j++)
-        {
-            std::cout << pointeredges[j]->getState() << " ";
-            //sol++;
-        }
-       std::cout << sum << "\n";
+        //if (var > pointeredges.size() / 2) std::cout << "Half way there\n";
+        //for (int j = 0; j < pointeredges.size(); j++)
+        //{
+        //    std::cout << pointeredges[j]->getState() << " ";
+        //    //sol++;
+        //}
+       //std::cout << sum << "\n";
 
         n.clearVisited();
 
@@ -334,10 +334,12 @@ int main()
     std::cout << "Type path to graphml file \n";
     std::cin >> pathml;
     Graph e(pathml);
+
     std::cout << "\n Type probabil for edges \n";
     std::cin >> probabil;
     e.setExternalProbabil(probabil);
-    std::cout << "\n  + Type Begining node \n"<< probabil;
+
+    std::cout << "\n Type Begining node \n";
     std::cin >> start;
     std::cout << "\n Type Finish node \n";
     std::cin >> finish;

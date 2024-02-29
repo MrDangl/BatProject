@@ -1,12 +1,12 @@
 #ifndef __CMD_LINE_HPP__
 #define __CMD_LINE_HPP__
 
-#include <iostream>
-#include <string>
 #include <variant>
+#include <string>
+#include <iostream>
 #include <vector>
 #include <cinttypes>
-
+#include <sstream>
 // This class is a simple and effective class to parse command line arguments.
 // For each possible argument it stores a pointer to a variable. When the
 // corresponding argument is set on the command line (given to the parse()

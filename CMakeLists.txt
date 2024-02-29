@@ -26,5 +26,6 @@ if (CMAKE_VERSION VERSION_GREATER 3.12)
 endif()
 target_link_libraries(BatResilProject PRIVATE pugs)
 target_link_libraries(BatResilProject PRIVATE cmd_line)
+target_compile_features(BatResilProject PUBLIC cxx_std_17)
 
 # TODO: Добавьте тесты и целевые объекты, если это необходимо.

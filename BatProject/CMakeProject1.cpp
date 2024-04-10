@@ -11,6 +11,7 @@
 #include <list>
 #include <map>
 #include <vector>
+#include <bitset>
 #include <omp.h>
 #define MaxNvar  42
 using namespace std;
@@ -19,9 +20,9 @@ using namespace std;
 // using adjacency list representation
 class Edge {
     unsigned int start, end;
+    public:
     double probability = 0.9;
     bool state;
-    public:
     int getStart()
     {
         return start;
@@ -71,6 +72,15 @@ public:
     bool DFS(int v, int m);
     vector<Edge*> getEdges();
 };
+
+class GState
+{
+    public :
+        double probabil;
+        Graph graph;
+        std::string charState;
+};
+
 void Graph::clearVisited()
 {
     visited.clear();
@@ -212,8 +222,8 @@ double calculateGraphReliabilityFor(Graph n,int from, int to)
 {
     double sum = 0;
     int var = 0;
-    int numberOfIter = std::pow(2, n.getEdges().size());
-    int sol = 0;
+    long numberOfIter = std::pow(2, n.getEdges().size());
+    long sol = 0;
     auto pointeredges = n.getEdges();
     #pragma omp parallel
     {
@@ -272,8 +282,64 @@ double calculateGraphReliabilityFor(Graph n,int from, int to)
     return sum;
 }
 
+
+
+std::vector<GState> calculateAllStates(Graph n)
+{
+    int graphsize = n.edges.size();
+    long sizeOfIter = std::pow(2, graphsize);
+    std::vector<GState> vectorState;
+    
+
+
+    for (long i = 0; i < sizeOfIter; i++)
+    { 
+        GState state;
+        state.graph = n;
+        string charbit;
+        
+        for (int j = graphsize-1; j >= 0; j--) {
+            int k = i >> j;
+            if (k & 1)
+                charbit.push_back('1');
+            else
+                charbit.push_back('0');
+        }
+        
+        state.charState = charbit;
+        double probState =0;
+        
+        for (int j = 0; j < charbit.size(); j++)
+        {
+            if (charbit[j] == '1')
+            {
+                state.graph.edges[j]->state = true;
+            }
+        }
+
+        
+        for (std::vector<int>::iterator j = state.graph.nodes.begin(); j < std::prev(state.graph.nodes.end()); j++)
+        {
+            for (std::vector<int>::iterator  k = j; k < state.graph.nodes.end(); k++)
+            {
+                bool isPathExst = state.graph.DFS(*j, *k);
+                if (isPathExst)
+                {
+                    probState += state.graph.calculate_state();
+                }
+            }
+        }
+        probState = probState / (graphsize * (graphsize - 1));
+        state.probabil = probState;
+        vectorState.push_back(state);
+    }
+
+
+    return vectorState;
+}
+
 // Driver code
-int main()
+int main(int argc, char* argv[])
 {
     // Plug graph here
     Graph g;
@@ -282,38 +348,44 @@ int main()
     g.addEdge(1, 2);
     g.addEdge(1, 3);
 
-    /*g.addEdge(2, 3);
+    g.addEdge(2, 3);
     g.addEdge(2, 4);
     g.addEdge(3, 2);
-    g.addEdge(3, 4);*/
-
-
-    g.addEdge(2, 5);
-    g.addEdge(3, 7);
     g.addEdge(3, 4);
-    g.addEdge(4, 3);
-    g.addEdge(4, 5);
-    g.addEdge(5, 2);
-    g.addEdge(5, 6);
-    g.addEdge(5, 8);
-    g.addEdge(5, 4);
-    g.addEdge(6, 5);
-    g.addEdge(6, 7);
-    g.addEdge(7, 6);
-    g.addEdge(7, 3);
-    g.addEdge(7, 8);
-    g.addEdge(7, 9);
-    g.addEdge(8, 5);
-    g.addEdge(8, 7);
-    g.addEdge(8, 9);
 
+//
+//    g.addEdge(2, 5);
+//    g.addEdge(3, 7);
+//    g.addEdge(3, 4);
+//    g.addEdge(4, 3);
+//    g.addEdge(4, 5);
+//    g.addEdge(5, 2);
+//    g.addEdge(5, 6);
+//    g.addEdge(5, 8);
+//    g.addEdge(5, 4);
+//    g.addEdge(6, 5);
+//    g.addEdge(6, 7);
+//    g.addEdge(7, 6);
+//    g.addEdge(7, 3);
+//    g.addEdge(7, 8);
+//    g.addEdge(7, 9);
+//    g.addEdge(8, 5);
+//    g.addEdge(8, 7);
+//    g.addEdge(8, 9);
+//
 }
 
     std::cout << "Here we go ";
+
+    int value = 32;
+   
+
+    std::vector<GState> allStates = calculateAllStates(g);
     // calculation are done in methods
-    double sum = calculateGraphReliabilityFor(g, 1, 9);
+    double sum = calculateGraphReliabilityFor(g, 1, 3);
 
     std::cout << " final score is " << sum << "\n";
+
     return 0;
 }
 

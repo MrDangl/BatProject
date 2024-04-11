@@ -74,19 +74,21 @@ public:
     void clearVisited();
     void addEdge(int v, int w);
     void addEdge(int v, int w,bool state);
+    void addEdge(Edge& edge);
     double calculate_state();
+    Graph* clone();
 
     // DFS traversal of the vertices
     // reachable from v
     bool DFS(int v, int m);
     vector<Edge*> getEdges();
+    ~Graph();
 };
 
 class GState
 {
     public :
         double probabil;
-        Graph* graph;
         std::string charState;
 };
 
@@ -110,6 +112,13 @@ void Graph::addEdge(int v, int w,bool state)
     edges.push_back(edge);
 }
 
+void Graph::addEdge(Edge& edge)
+{
+    Edge* newedge = new Edge(edge);
+    adj[newedge->getStart()].push_back(newedge);
+    edges.push_back(newedge);
+}
+
 
 // Calculation of the probability of the state by multiplying probabilities of every edge
 double Graph::calculate_state()
@@ -127,6 +136,15 @@ double Graph::calculate_state()
     }
 //std::cout << graphprobabil<<"\n";
     return graphprobabil;
+}
+
+Graph* Graph::clone()
+{
+    Graph* clone = new Graph();
+    for (int i = 0; i < edges.size(); i++)
+        clone->addEdge (*edges[i]);
+    clone->nodes = nodes;
+    return clone;
 }
 
 
@@ -167,6 +185,18 @@ bool Graph::DFS(int v, int m)
 vector<Edge*> Graph::getEdges()
 {
     return edges;
+}
+
+Graph::~Graph()
+{
+    visited.clear();
+    nodes.clear();
+    for(auto edge : edges)
+    {
+        delete edge;
+    }
+    edges.clear();
+    adj.clear();
 }
 
 
@@ -298,16 +328,15 @@ std::vector<GState> calculateAllStates(Graph n)
     int graphsize = n.edges.size();
     long sizeOfIter = std::pow(2, graphsize);
     std::vector<GState> vectorState;
-//    #pragma omp parallel
+    #pragma omp parallel
     {
         
-//        #pragma omp for
+        #pragma omp for
         for (long i = 0; i < sizeOfIter; i++)
         {
             GState state;
-            Graph* graph = new Graph(n);
+            Graph* graph = n.clone();
             graph->clearVisited();
-            state.graph = graph;
             string charbit;
 
             for (int j = graphsize - 1; j >= 0; j--) {
@@ -325,29 +354,30 @@ std::vector<GState> calculateAllStates(Graph n)
             {
                 if (charbit[j] == '1')
                 {
-                    state.graph->edges[j]->state = true;
+                    graph->edges[j]->state = true;
                 }
             }
 
 
-            for (std::vector<int>::iterator j = state.graph->nodes.begin(); j < std::prev(state.graph->nodes.end()); j++)
+            for (std::vector<int>::iterator j = graph->nodes.begin(); j < graph->nodes.end(); j++)
             {
-                for (std::vector<int>::iterator k = j+1; k < state.graph->nodes.end(); k++)
+                for (std::vector<int>::iterator k = graph->nodes.begin(); k < graph->nodes.end(); k++)
                 {
-                    bool isPathExst = state.graph->DFS(*j, *k);
-                    if (isPathExst)
+                    bool isPathExst = graph->DFS(*j, *k);
+                    if (isPathExst && j!=k)
                     {
-                        probState += state.graph->calculate_state();
+                        probState += graph->calculate_state();
                     }
                 }
             }
-            double allit = graphsize * (graphsize - 1);
+            double allit = graph->nodes.size() * (graph->nodes.size() - 1);
             probState = probState / allit;
             state.probabil = probState;
-//            #pragma omp critical
+            #pragma omp critical
             {
                 vectorState.push_back(state);
             }
+            delete graph;
         }
 
     }
@@ -363,7 +393,7 @@ int main(int argc, char* argv[])
     {
         //example e
     g.addEdge(1, 2);
-    g.addEdge(1, 3);
+    g.addEdge(1, 2);
 
     g.addEdge(2, 3);
     g.addEdge(2, 4);
@@ -373,25 +403,30 @@ int main(int argc, char* argv[])
     g.nodes.push_back(2);
     g.nodes.push_back(3);
     g.nodes.push_back(4);
-//
-//    g.addEdge(2, 5);
-//    g.addEdge(3, 7);
-//    g.addEdge(3, 4);
-//    g.addEdge(4, 3);
-//    g.addEdge(4, 5);
-//    g.addEdge(5, 2);
-//    g.addEdge(5, 6);
-//    g.addEdge(5, 8);
-//    g.addEdge(5, 4);
-//    g.addEdge(6, 5);
-//    g.addEdge(6, 7);
-//    g.addEdge(7, 6);
-//    g.addEdge(7, 3);
-//    g.addEdge(7, 8);
-//    g.addEdge(7, 9);
-//    g.addEdge(8, 5);
-//    g.addEdge(8, 7);
-//    g.addEdge(8, 9);
+    g.nodes.push_back(5);
+    g.nodes.push_back(6);
+    g.nodes.push_back(7);
+    g.nodes.push_back(8);
+    g.nodes.push_back(9);
+
+    g.addEdge(2, 5);
+    g.addEdge(3, 7);
+    g.addEdge(3, 4);
+    g.addEdge(4, 3);
+    g.addEdge(4, 5);
+    g.addEdge(5, 2);
+    g.addEdge(5, 6);
+    g.addEdge(5, 8);
+    g.addEdge(5, 4);
+    g.addEdge(6, 5);
+    g.addEdge(6, 7);
+    g.addEdge(7, 6);
+    g.addEdge(7, 3);
+    g.addEdge(7, 8);
+    g.addEdge(7, 9);
+    g.addEdge(8, 5);
+    g.addEdge(8, 7);
+    g.addEdge(8, 9);
 //
 }
 

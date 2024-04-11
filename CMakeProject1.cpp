@@ -397,7 +397,7 @@ std::vector<GState> calculateAllStates(Graph n)
         
         #pragma omp for
         for (long i = 0; i < sizeOfIter; i++)
-        {/*
+        {
             GState state;
             Graph* graph = n.clone();
             graph->clearVisited();
@@ -441,7 +441,7 @@ std::vector<GState> calculateAllStates(Graph n)
             {
                 vectorState.push_back(state);
             }
-            delete graph;*/
+            delete graph;
         }
 
     }

@@ -56,13 +56,10 @@ class Edge {
 
 class Graph {
 public:
-
-    Graph(const Graph& other);
-    Graph();
     map<int, bool> visited;
-    map<int, list<Edge> > adj;
+    map<int, list<Edge*> > adj;
     vector<int> nodes;
-    vector<Edge> edges;
+    vector<Edge*> edges;
 
     // Function to add an edge to graph
     void clearVisited();
@@ -73,7 +70,7 @@ public:
     // DFS traversal of the vertices
     // reachable from v
     bool DFS(int v, int m);
-    vector<Edge> getEdges();
+    vector<Edge*> getEdges();
 };
 
 class GState
@@ -84,22 +81,6 @@ class GState
         std::string charState;
 };
 
-Graph::Graph(const Graph& other)
-{
-    this->visited = other.visited;
-    this->adj = other.adj;
-    this->nodes = other.nodes;
-    this->edges = other.edges;
-}
-Graph::Graph()
-{
-    this->visited = map<int, bool>();
-    this->adj = map<int, list<Edge>>();
-    this->nodes = vector<int>();
-    this->edges = vector<Edge>();
-
-}
-
 void Graph::clearVisited()
 {
     visited.clear();
@@ -108,14 +89,14 @@ void Graph::clearVisited()
 void Graph::addEdge(int v, int w)
 {
     // Add w to v’s list.
-    Edge edge = Edge(v, w);
+    Edge *edge = new Edge(v, w);
     adj[v].push_back(edge);
     edges.push_back(edge);
 }
 void Graph::addEdge(int v, int w,bool state)
 {
     // Add w to v’s list.
-    Edge edge = Edge(v, w,state);
+    Edge* edge = new Edge(v, w,state);
     adj[v].push_back(edge);
     edges.push_back(edge);
 }
@@ -126,19 +107,14 @@ double Graph::calculate_state()
 {
     double graphprobabil = 0;
 //    #pragma omp parallel for reduction(+:graphprobabil)
-    for (int i = 0; i<edges.size();i++) 
-    {
+    for (int i = 0; i<edges.size();i++) {
+        if (edges[i]->getState()) graphprobabil *= edges[i]->getProbability();
+        else graphprobabil *= 1 - edges[i]->getProbability();
         if (graphprobabil == 0)
         {
-            if (edges[i].getState()) graphprobabil = edges[i].getProbability();
-            else graphprobabil = 1 - edges[i].getProbability();
+            if (edges[i]->getState()) graphprobabil = edges[i]->getProbability();
+            else graphprobabil = 1 - edges[i]->getProbability();
         }
-        else 
-        {
-            if (edges[i].getState()) graphprobabil *= edges[i].getProbability();
-            else graphprobabil *= 1 - edges[i].getProbability();
-        }
-
     }
 //std::cout << graphprobabil<<"\n";
     return graphprobabil;
@@ -158,14 +134,14 @@ bool Graph::DFS(int v, int m)
     // Recur for all the vertices adjacent
     // to this vertex
 
-    list<Edge>::iterator i;
+    list<Edge*>::iterator i;
 //#pragma omp parallel for
     for (auto i : adj[v]) {
 //      #pragma omp critical
-        if (!visited[i.getEnd()] && i.getState())
+        if (!visited[i->getEnd()] && i->getState())
         {
 //            #pragma omp task
-            DFS(i.getEnd(), m);
+            DFS(i->getEnd(), m);
         }
     }
     //list<Edge>::iterator iter = std::find(adj[v].begin(), adj[v].end(), iter->getEnd()==m);
@@ -179,7 +155,7 @@ bool Graph::DFS(int v, int m)
 
 }
 
-vector<Edge> Graph::getEdges()
+vector<Edge*> Graph::getEdges()
 {
     return edges;
 }
@@ -203,9 +179,9 @@ double calculateGraphReliabilityWhile(Graph n,int from, int to){
 
     do {
         sol++;
-        if (!pointeredges[var].getState()) {
+        if (!pointeredges[var]->getState()) {
             
-            pointeredges[var].changeState(true);
+            pointeredges[var]->changeState(true);
             
             //Debug slow
             //for (var = 0; var < pointeredges.size(); var++)
@@ -229,7 +205,7 @@ double calculateGraphReliabilityWhile(Graph n,int from, int to){
             delete temp;
            // printf("%d", sol); printf("\n");
         }
-        else { pointeredges[var].changeState(false);var++; }
+        else { pointeredges[var]->changeState(false);var++; }
     } while (var < pointeredges.size());
     return sum;
 }
@@ -257,11 +233,11 @@ double calculateGraphReliabilityFor(Graph n,int from, int to)
                 
                 if (var < pointeredges.size())
                 {
-                    if (pointeredges[var].getState()) {
+                    if (pointeredges[var]->getState()) {
 
-                        while (pointeredges[var].getState() != false)
+                        while (pointeredges[var]->getState() != false)
                         {
-                            pointeredges[var].changeState(false);
+                            pointeredges[var]->changeState(false);
                             if (var < pointeredges.size() - 1)
                             {
                                
@@ -270,9 +246,9 @@ double calculateGraphReliabilityFor(Graph n,int from, int to)
                         }
                         
                     }
-                    if (!pointeredges[var].getState())
+                    if (!pointeredges[var]->getState())
                     {
-                        pointeredges[var].changeState(true);
+                        pointeredges[var]->changeState(true);
                         var = 0;
                     }
 
@@ -312,7 +288,7 @@ std::vector<GState> calculateAllStates(Graph n)
 {
     int graphsize = n.edges.size();
     long sizeOfIter = std::pow(2, graphsize);
-    std::vector<GState> vectorState = std::vector<GState>();
+    std::vector<GState> vectorState;
 //    #pragma omp parallel
     {
         
@@ -320,8 +296,7 @@ std::vector<GState> calculateAllStates(Graph n)
         for (long i = 0; i < sizeOfIter; i++)
         {
             GState state;
-            Graph g(n);
-            state.graph = g;
+            state.graph = n;
             string charbit;
 
             for (int j = graphsize - 1; j >= 0; j--) {
@@ -339,7 +314,7 @@ std::vector<GState> calculateAllStates(Graph n)
             {
                 if (charbit[j] == '1')
                 {
-                    state.graph.edges[j].state = true;
+                    state.graph.edges[j]->state = true;
                 }
             }
 
@@ -348,16 +323,14 @@ std::vector<GState> calculateAllStates(Graph n)
             {
                 for (std::vector<int>::iterator k = j+1; k < state.graph.nodes.end(); k++)
                 {
-                    int start = *j;
-                    int end = *k;
-                    bool isPathExst = state.graph.DFS(start, end);
+                    bool isPathExst = state.graph.DFS(*j, *k);
                     if (isPathExst)
                     {
                         probState += state.graph.calculate_state();
                     }
                 }
             }
-            double allit = state.graph.nodes.size() * (state.graph.nodes.size() - 1);
+            double allit = graphsize * (graphsize - 1);
             probState = probState / allit;
             state.probabil = probState;
 //            #pragma omp critical

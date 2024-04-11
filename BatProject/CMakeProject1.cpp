@@ -61,6 +61,15 @@ public:
     vector<int> nodes;
     vector<Edge*> edges;
 
+    Graph& operator=(const Graph& rhs) 
+    {
+        visited = rhs.visited;
+        adj = rhs.adj;
+        nodes = rhs.nodes;
+        edges = rhs.edges;
+    };
+
+
     // Function to add an edge to graph
     void clearVisited();
     void addEdge(int v, int w);
@@ -77,7 +86,7 @@ class GState
 {
     public :
         double probabil;
-        Graph graph;
+        Graph* graph;
         std::string charState;
 };
 
@@ -296,7 +305,9 @@ std::vector<GState> calculateAllStates(Graph n)
         for (long i = 0; i < sizeOfIter; i++)
         {
             GState state;
-            state.graph = n;
+            Graph* graph = new Graph(n);
+            graph->clearVisited();
+            state.graph = graph;
             string charbit;
 
             for (int j = graphsize - 1; j >= 0; j--) {
@@ -314,19 +325,19 @@ std::vector<GState> calculateAllStates(Graph n)
             {
                 if (charbit[j] == '1')
                 {
-                    state.graph.edges[j]->state = true;
+                    state.graph->edges[j]->state = true;
                 }
             }
 
 
-            for (std::vector<int>::iterator j = state.graph.nodes.begin(); j < std::prev(state.graph.nodes.end()); j++)
+            for (std::vector<int>::iterator j = state.graph->nodes.begin(); j < std::prev(state.graph->nodes.end()); j++)
             {
-                for (std::vector<int>::iterator k = j+1; k < state.graph.nodes.end(); k++)
+                for (std::vector<int>::iterator k = j+1; k < state.graph->nodes.end(); k++)
                 {
-                    bool isPathExst = state.graph.DFS(*j, *k);
+                    bool isPathExst = state.graph->DFS(*j, *k);
                     if (isPathExst)
                     {
-                        probState += state.graph.calculate_state();
+                        probState += state.graph->calculate_state();
                     }
                 }
             }

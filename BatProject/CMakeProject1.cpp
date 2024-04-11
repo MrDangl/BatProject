@@ -289,53 +289,59 @@ std::vector<GState> calculateAllStates(Graph n)
     int graphsize = n.edges.size();
     long sizeOfIter = std::pow(2, graphsize);
     std::vector<GState> vectorState;
-    
-
-
-    for (long i = 0; i < sizeOfIter; i++)
-    { 
-        GState state;
-        state.graph = n;
-        string charbit;
+//    #pragma omp parallel
+    {
         
-        for (int j = graphsize-1; j >= 0; j--) {
-            int k = i >> j;
-            if (k & 1)
-                charbit.push_back('1');
-            else
-                charbit.push_back('0');
-        }
-        
-        state.charState = charbit;
-        double probState =0;
-        
-        for (int j = 0; j < charbit.size(); j++)
+//        #pragma omp for
+        for (long i = 0; i < sizeOfIter; i++)
         {
-            if (charbit[j] == '1')
-            {
-                state.graph.edges[j]->state = true;
+            GState state;
+            state.graph = n;
+            string charbit;
+
+            for (int j = graphsize - 1; j >= 0; j--) {
+                int k = i >> j;
+                if (k & 1)
+                    charbit.push_back('1');
+                else
+                    charbit.push_back('0');
             }
-        }
 
-        
-        for (std::vector<int>::iterator j = state.graph.nodes.begin(); j < std::prev(state.graph.nodes.end()); j++)
-        {
-            for (std::vector<int>::iterator  k = j; k < state.graph.nodes.end(); k++)
+            state.charState = charbit;
+            double probState = 0;
+
+            for (int j = 0; j < charbit.size(); j++)
             {
-                bool isPathExst = state.graph.DFS(*j, *k);
-                if (isPathExst)
+                if (charbit[j] == '1')
                 {
-                    probState += state.graph.calculate_state();
+                    state.graph.edges[j]->state = true;
                 }
             }
+
+
+            for (std::vector<int>::iterator j = state.graph.nodes.begin(); j < std::prev(state.graph.nodes.end()); j++)
+            {
+                for (std::vector<int>::iterator k = j+1; k < state.graph.nodes.end(); k++)
+                {
+                    bool isPathExst = state.graph.DFS(*j, *k);
+                    if (isPathExst)
+                    {
+                        probState += state.graph.calculate_state();
+                    }
+                }
+            }
+            double allit = graphsize * (graphsize - 1);
+            probState = probState / allit;
+            state.probabil = probState;
+//            #pragma omp critical
+            {
+                vectorState.push_back(state);
+            }
         }
-        probState = probState / (graphsize * (graphsize - 1));
-        state.probabil = probState;
-        vectorState.push_back(state);
+
     }
-
-
     return vectorState;
+
 }
 
 // Driver code
@@ -352,7 +358,10 @@ int main(int argc, char* argv[])
     g.addEdge(2, 4);
     g.addEdge(3, 2);
     g.addEdge(3, 4);
-
+    g.nodes.push_back(1);
+    g.nodes.push_back(2);
+    g.nodes.push_back(3);
+    g.nodes.push_back(4);
 //
 //    g.addEdge(2, 5);
 //    g.addEdge(3, 7);
@@ -382,7 +391,12 @@ int main(int argc, char* argv[])
 
     std::vector<GState> allStates = calculateAllStates(g);
     // calculation are done in methods
-    double sum = calculateGraphReliabilityFor(g, 1, 3);
+    double sum = 0;
+    for (auto state : allStates)
+    {
+        sum += state.probabil;
+    }
+    
 
     std::cout << " final score is " << sum << "\n";
 

@@ -23,15 +23,15 @@ using namespace std;
 // Graph class represents a directed graph
 // using adjacency list representation
 class Edge {
-    string start, end;
+    int start, end;
     double probability = 0.9;
     bool state;
     public:
-    string getStart()
+    int getStart()
     {
         return start;
     }
-    string getEnd()
+    int getEnd()
     {
         return end;
     }
@@ -47,22 +47,25 @@ class Edge {
     {
         state = change;
     }
-    Edge(string nodeStart, string nodeEnd)
+    Edge(int nodeStart, int nodeEnd)
     {
         start = nodeStart; end = nodeEnd; state = false;
     }
-    Edge(string nodeStart, string nodeEnd,bool statebool)
+    Edge(int nodeStart, int nodeEnd,bool statebool)
     {
         start = nodeStart; end = nodeEnd; state = statebool;
+    }Edge(int nodeStart, int nodeEnd,double probabil)
+    {
+        start = nodeStart; end = nodeEnd; probability= probabil;
     }
 };
 // TODO: rearrange cycles for OpenMP integration
 
 class Graph {
 public:
-    map<string, bool> visited;
-    map<string, list<Edge*> > adj;
-    vector<string> nodes;
+    map<int, bool> visited;
+    map<int, list<Edge*> > adj;
+    vector<int> nodes;
     vector<Edge*> edges;
 
     Graph& operator=(const Graph& rhs) 
@@ -77,10 +80,11 @@ public:
     double extProbabil;
     // Function to add an edge to graph
     void clearVisited();
-    void addEdge(string v, string w);
-    void addEdge(string v, string w,bool state);
+    void addEdge(int v, int w);
+    void addEdge(int v, int w,bool state);
+    void addEdge(Edge& edge);
     double calculate_state();
-    double calculate_state(double probabil);
+    //double calculate_state(double probabil);
    
     void setExternalProbabil(double probabil);
 
@@ -92,7 +96,7 @@ public:
 
     // DFS traversal of the vertices
     // reachable from v
-    bool DFS(string v, string m);
+    bool DFS(int v, int m);
     vector<Edge*> getEdges();
     ~Graph();
 };
@@ -114,7 +118,7 @@ Graph::Graph(string graphMlPath)
     pugi::xml_document doc;
     pugi::xml_parse_result result = doc.load_file(graphMlPath.c_str());
     pugi::xml_node graph = doc.child("graphml").child("graph");
-    nodes = vector<string>();
+    nodes = vector<int>();
     edges.clear();
     auto c = graph.first_child();
     for(pugi::xml_node elem : graph)
@@ -122,15 +126,29 @@ Graph::Graph(string graphMlPath)
         string str = elem.name();
         if (str == "node")
         {
-            nodes.push_back(elem.attribute("id").as_string());
+            nodes.push_back(elem.attribute("id").as_int());
         }
         if (str == "edge")
         {
-            addEdge(elem.attribute("source").as_string(), elem.attribute("target").as_string());
-            
-            if (elem.attribute("directed"))
+            if (elem.append_attribute("prblty"))
             {
-            addEdge(elem.attribute("target").as_string(), elem.attribute("source").as_string());
+                addEdge(elem.attribute("source").as_int(), elem.attribute("target").as_int(),elem.attribute("prblty").as_double());
+            
+                if (elem.attribute("directed"))
+                {
+                    addEdge(elem.attribute("target").as_int(), elem.attribute("source").as_int(), elem.attribute("prblty").as_double());
+                }
+  
+            }
+            else
+            {
+                addEdge(elem.attribute("source").as_int(), elem.attribute("target").as_int(), graph.attribute("prbltydefault").as_double());
+
+                if (elem.attribute("directed"))
+                {
+                    addEdge(elem.attribute("target").as_int(), elem.attribute("source").as_int(), graph.attribute("prbltydefault").as_double());
+                }
+
             }
         }
     }
@@ -140,14 +158,14 @@ Graph::Graph()
 {
 }
 
-void Graph::addEdge(string v, string w)
+void Graph::addEdge(int v, int w)
 {
     // Add w to v’s list.
     Edge *edge = new Edge(v, w);
     adj[v].push_back(edge);
     edges.push_back(edge);
 }
-void Graph::addEdge(string v, string w,bool state)
+void Graph::addEdge(int v, int w,bool state)
 {
     // Add w to v’s list.
     Edge* edge = new Edge(v, w,state);
@@ -203,7 +221,7 @@ double Graph::getExternalProbabil()
 
 // recursive altered deep first search that sends bool in return found m
 // TODO: redo function without recursive for open MP
-bool Graph::DFS(string v, string m)
+bool Graph::DFS(int v, int m)
 {
     // Mark the current node as visited and
     // print it
@@ -260,7 +278,7 @@ Graph::~Graph()
     // и проверяем каждое состояние через DFS есть ли в данном состоянии указаный узел
     // если узел есть считаем состояние как произведение вероятностей для каждой дуги в схеме , где 1-вер для выключенной
     // 1+вер для включенной, потом мы суммируем все полученные вероятности состояний и получаем оценку для всей сети
-double calculateGraphReliabilityWhile(Graph n, string from, string to){
+double calculateGraphReliabilityWhile(Graph n, int from, int to){
     
     double sum = 0;
     int var = 0;
@@ -309,61 +327,63 @@ double calculateGraphReliabilityWhile(Graph n, string from, string to){
 // и проверяем каждое состояние через DFS есть ли в данном состоянии указаный узел
 // если узел есть считаем состояние как произведение вероятностей для каждой дуги в схеме , где 1-вер для выключенной
 // 1+вер для включенной, потом мы суммируем все полученные вероятности состояний и получаем оценку для всей сети
-double calculateGraphReliabilityFor(Graph n, string from, string to)
+double calculateGraphReliabilityFor(Graph n, int from, int to)
 {
     double sum = 0;
     int var = 0;
     long numberOfIter = std::pow(2, n.getEdges().size());
     long sol = 0;
     auto pointeredges = n.getEdges();
-    #pragma omp parallel
+#pragma omp parallel
     {
-            #pragma omp for reduction(+:sum)
-            for (sol = 0; sol < numberOfIter; sol++)
-            {
-                
-                if (var < pointeredges.size())
-                {
-                    if (pointeredges[var]->getState()) {
+#pragma omp for reduction(+:sum)
+        for (sol = 0; sol < numberOfIter; sol++)
+        {
 
-                        while (pointeredges[var]->getState() != false)
-                        {
-                            pointeredges[var]->changeState(false);
-                            if (var < pointeredges.size() - 1)
-                            {
-                               
-                                var++;
-                            }
-                        }
-                        
-                    }
-                    if (!pointeredges[var]->getState())
+            if (var < pointeredges.size())
+            {
+                if (pointeredges[var]->getState()) {
+
+                    while (pointeredges[var]->getState() != false)
                     {
-                        pointeredges[var]->changeState(true);
-                        var = 0;
+                        pointeredges[var]->changeState(false);
+                        if (var < pointeredges.size() - 1)
+                        {
+
+                            var++;
+                        }
                     }
 
                 }
+                if (!pointeredges[var]->getState())
+                {
+                    pointeredges[var]->changeState(true);
+                    var = 0;
+                }
 
-        //Debug slow
-        //if (var > pointeredges.size() / 2) std::cout << "Half way there\n";
-        //for (int j = 0; j < pointeredges.size(); j++)
-        //{
-        //    std::cout << pointeredges[j]->getState() << " ";
-        //    //sol++;
-        //}
-       //std::cout << sum << "\n";
+            }
+
+            //Debug slow
+            //if (var > pointeredges.size() / 2) std::cout << "Half way there\n";
+            //for (int j = 0; j < pointeredges.size(); j++)
+            //{
+            //    std::cout << pointeredges[j]->getState() << " ";
+            //    //sol++;
+            //}
+           //std::cout << sum << "\n";
 
 
-                Graph* temp = new Graph(n);
+            Graph* temp = new Graph(n);
 
-        if (n.DFS(from, to))
-        {
-            //sum += n.calculate_state();
-            sum += n.calculate_state(n.getExternalProbabil());
+            if (n.DFS(from, to))
+            {
+                //sum += n.calculate_state();
+                sum += n.calculate_state();
+            }
+            //if (message) { cout << " number of threads" << omp_get_num_threads() << "\n"; message = false; }
         }
-        //if (message) { cout << " number of threads" << omp_get_num_threads() << "\n"; message = false; }
     }
+}
 
 
 
@@ -377,7 +397,7 @@ std::vector<GState> calculateAllStates(Graph n)
         
         #pragma omp for
         for (long i = 0; i < sizeOfIter; i++)
-        {
+        {/*
             GState state;
             Graph* graph = n.clone();
             graph->clearVisited();
@@ -398,7 +418,7 @@ std::vector<GState> calculateAllStates(Graph n)
             {
                 if (charbit[j] == '1')
                 {
-                    graph->edges[j]->state = true;
+                    graph->edges[j]->changeState(true);
                 }
             }
 
@@ -421,7 +441,7 @@ std::vector<GState> calculateAllStates(Graph n)
             {
                 vectorState.push_back(state);
             }
-            delete graph;
+            delete graph;*/
         }
 
     }
@@ -433,29 +453,35 @@ std::vector<GState> calculateAllStates(Graph n)
 int main(int argc, char** argv)
 {
     // Plug graph here
-    double probabil;
+    double probabil = 0;
     std::string pathml;
     std::string start;
     std::string finish;
     std::string temp;
     Command_line args;
-    args.add_argument({ "-pathMl" }, &pathml, "Path to GrapthMl.");
-    args.add_argument({ "-probability" }, &probabil, "Probability of edge reliability");
-    args.add_argument({ "-start" }, &start, "Start node");
-    args.add_argument({ "-finish" }, &finish, "finish node");
+    args.add_argument({ "-pathMl" }, &pathml, "Path to GrapthMl.", false);
+    args.add_argument({ "-probability" }, &probabil, "Probability of edge reliability",false);
+    args.add_argument({ "-start" }, &start, "Start node",false);
+    args.add_argument({ "-finish" }, &finish, "finish node",false);
 
     args.parse(argc, argv);
     // calculation are done in methods
     
-
+    std::vector<GState> gstatevec;
+    pathml = "gas2003.graphml";
     Graph e(pathml);
-
-    e.setExternalProbabil(probabil);
-
-
-    double sum = calculateGraphReliabilityFor(e, start, finish);
-
-    std::cout << " final score is " << sum << "\n";
+    if (probabil != 0) 
+    {
+        e.setExternalProbabil(probabil);
+    }
+    if (!start.empty() && !finish.empty())
+    {
+        probabil = calculateGraphReliabilityFor(e, atoi(start.c_str()), atoi(finish.c_str()));
+    }
+    else
+    {
+        gstatevec = calculateAllStates(e);
+    }
 
     return 0;
 }

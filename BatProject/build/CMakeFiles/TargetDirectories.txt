@@ -1,3 +1,0 @@
-C:/Users/Gleb/Documents/GitHub/BatProject/BatProject/build/CMakeFiles/CMakeProject1.dir
-C:/Users/Gleb/Documents/GitHub/BatProject/BatProject/build/CMakeFiles/ALL_BUILD.dir
-C:/Users/Gleb/Documents/GitHub/BatProject/BatProject/build/CMakeFiles/ZERO_CHECK.dir
